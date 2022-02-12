@@ -1,3 +1,52 @@
+__Fork:__ state at the time Scratch Link team released version 1.3.82 with private changes (not here) to better hide their private TLS key. This was intended to fix issue #200 quoted below.
+
+_https://github.com/LLK/scratch-link/issues/200_
+
+<blockquote>
+
+### Expected Behavior
+
+The TLS private key for `device-manager.scratch.mit.edu`, which resolves to `127.0.0.1`, shouldn't be distributed. See Sectigo's [Certificate Policies](https://sectigo.com/CPS) section 4.9.1 (Sectigo is the certificate authority; this very link is in the certificate). The TLS private key enables mitm attacks between Scratch and Scratch Link.
+
+### Actual Behavior
+
+The TLS private key can be found in the macOS and Windows applications. While the key is encrypted, the symmetric encryption key is stored in the application and can be found in `scratch-link/Certificates/convert-certificates.sh`. Extracting the encrypted certificate private key from the Scratch Link distribution and decrypting it are trivial. The SHA-256 of `scratch-device-manager.pem` is `2f5ab4f11432c1049dfa7ff867412b2f8df42b6966194d0afdf59cdf534cdbfe`.
+
+### Steps to Reproduce
+
+Read:
+- https://github.com/LLK/scratch-link/blob/develop/Certificates/convert-certificates.sh#L17
+
+    ```
+    # https://xkcd.com/221/
+    # see also roll.sh
+    IV="B5E41DCC5B4D6FCD1C1E028430B921E6"
+    KEY="D897EB08E0E9DE8F0B77AD423502AFA51372F8DAB0CBBE650C1A1CBD5B1090D9"
+    ```
+
+- https://github.com/LLK/scratch-link/blob/develop/macOS/Makefile#L99
+
+    ```
+    cp -rv ../Certificates/out/scratch-device-manager.pem.enc "$@/Contents/Resources/"
+    ```
+
+- https://github.com/LLK/scratch-link/blob/develop/macOS/Sources/scratch-link/main.swift#L163
+
+    ```
+    guard let decryptedBytes = encryptedBytes
+        .decrypt(Cipher.aes_256_cbc, key: EncodingParams.key, iv: EncodingParams.iv) else {
+    ```
+
+### Operating System and Browser
+
+macOS and Windows.
+
+</blockquote>
+
+
+---
+_Original readme text below._
+
 # Scratch Link
 
 Scratch Link is a helper application which allows Scratch 3.0 to communicate with hardware peripherals. Scratch Link
